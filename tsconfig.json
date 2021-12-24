@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "es5",
+    "module": "es6",
+    "importHelpers": true,
+    "noImplicitAny": true,
+    "removeComments": false,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "declaration": true,
+    "declarationDir": "./"
+  },
+  "files": ["index.ts"]
+}
