@@ -4,6 +4,10 @@ type TStateBase = Record<string, any>;
 type TActionBase = Record<string, (...args: any[]) => TStateBase | Promise<TStateBase> | void>;
 type ExtractRestParameter<T extends (...args: any) => any> = T extends (arg: any, ...rest: infer P) => any ? P : never;
 
+function isPlainObject(target: any) {
+  return Object.prototype.toString.call(target) === '[object Object]';
+}
+
 export default function rfcState<TValue extends TStateBase, TAction extends TActionBase>(initialValue: TValue, rawActions?: TAction) {
   const [data, setData] = useState<TValue>(initialValue);
   const stateRef = useRef(data);
@@ -11,52 +15,35 @@ export default function rfcState<TValue extends TStateBase, TAction extends TAct
 
   const getState = useCallback(() => stateRef.current, []);
   const setState = useCallback((newState: TValue) => {
-    setData({ ...stateRef.current, ...newState });
+    if (newState && isPlainObject(newState)) {
+      setData({ ...stateRef.current, ...newState });
+    }
   }, []);
 
-  type TransformedActions = {
+  type ImmutableActions = {
     [Key in keyof TAction]: (...args: ExtractRestParameter<TAction[Key]>) => ReturnType<TAction[Key]>;
   };
 
-  const actions = useMemo<TransformedActions>(() => {
-    const transformedActions = {} as TransformedActions;
-    if (rawActions) {
-      const trySetState = (newState: any) => {
-        if (newState && Object.prototype.toString.call(newState) === '[object Object]') {
-          setState(newState);
-        }
-      };
+  const actions = useMemo<ImmutableActions>(() => {
+    if (rawActions && isPlainObject(rawActions)) {
+      const immutableActions = {} as ImmutableActions;
       for (let key in rawActions) {
-        if (rawActions.hasOwnProperty(key) && typeof rawActions[key] === 'function') {
+        if (typeof rawActions[key] === 'function') {
           const fn = rawActions[key];
-          transformedActions[key] = function (...args: any[]) {
+          immutableActions[key] = function (...args: any[]) {
             const res = fn(stateRef.current, ...args);
             if (res instanceof Promise) {
-              res.then(trySetState);
+              res.then(setState);
             } else {
-              trySetState(res);
+              setState(res as TValue);
             }
             return res;
-          };
+          } as any;
         }
       }
+      return immutableActions;
     }
-    return transformedActions;
   }, []);
 
-  return { state: data, getState, setState, actions };
+  return { state: data, actions, getState, setState };
 }
-
-// const _actions = {
-//   getData(id: string) {
-//     return [1, 2, 3];
-//   },
-// };
-
-// function App() {
-//   const { state, actions } = rfcState({ id: 0 }, _actions);
-
-//   actions.getData("1");
-
-//   state.id
-// }
