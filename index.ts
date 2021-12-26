@@ -3,6 +3,7 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 type TStateBase = Record<string, any>;
 type TActionBase = Record<string, (...args: any[]) => TStateBase | Promise<TStateBase> | void>;
 type ExtractRestParameter<T extends (...args: any) => any> = T extends (arg: any, ...rest: infer P) => any ? P : never;
+// type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : never }[keyof T];
 
 function isPlainObject(target: any) {
   return Object.prototype.toString.call(target) === '[object Object]';
@@ -20,17 +21,17 @@ export default function rfcState<TValue extends TStateBase, TAction extends TAct
     }
   }, []);
 
-  type ImmutableActions = {
+  type TMemoizedActions = {
     [Key in keyof TAction]: (...args: ExtractRestParameter<TAction[Key]>) => ReturnType<TAction[Key]>;
   };
 
-  const actions = useMemo<ImmutableActions>(() => {
+  const actions = useMemo<TMemoizedActions>(() => {
     if (rawActions && isPlainObject(rawActions)) {
-      const immutableActions = {} as ImmutableActions;
+      const memoizedActions = {} as TMemoizedActions;
       for (let key in rawActions) {
         if (typeof rawActions[key] === 'function') {
           const fn = rawActions[key];
-          immutableActions[key] = function (...args: any[]) {
+          memoizedActions[key] = function (...args: any[]) {
             const res = fn(stateRef.current, ...args);
             if (res instanceof Promise) {
               res.then(setState);
@@ -41,7 +42,7 @@ export default function rfcState<TValue extends TStateBase, TAction extends TAct
           } as any;
         }
       }
-      return immutableActions;
+      return memoizedActions;
     }
   }, []);
 
