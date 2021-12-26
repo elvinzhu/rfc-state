@@ -5,6 +5,7 @@ export interface IPost {
 
 export interface IState {
   id: number;
+  detailLoading?: boolean;
   postDetail?: IPost;
   detailError?: string;
 }
@@ -17,28 +18,23 @@ function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
   });
 }
 
-export function getDetail({ id }, test: string): Promise<Partial<IState>> {
-  return mockRequest<IPost>({
+export async function* getDetail({ id }, test: string): AsyncGenerator<Partial<IState>> {
+  yield { detailLoading: true };
+  const res = await mockRequest<IPost>({
     id: 1,
     title: 'rfc-state is awesome!',
-  })
-    .then((res) => {
-      if (res.success) {
-        return {
-          postDetail: res.data,
-        };
-      } else {
-        // return {
-        //   detailError: 'error to get post detial',
-        // };
-        // message.error(res.errMsg)
-      }
-    })
-    .catch((err: any) => {
-      return {
-        detailError: 'error to get post detial',
-      };
-    });
+  });
+  if (res.success) {
+    yield {
+      postDetail: res.data,
+      detailLoading: false,
+    };
+  } else {
+    yield {
+      detailError: 'error to fetch data!',
+      detailLoading: false,
+    };
+  }
 }
 
 export async function updatePost({ id, title }: IPost) {
