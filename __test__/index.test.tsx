@@ -1,7 +1,7 @@
 import { jest, describe, expect, test, it } from '@jest/globals';
 import React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
-import PostDetail from '../demos';
+import PostDetail from '../demos/PostDetail';
 import { act } from 'react-dom/test-utils';
 
 let container = null;

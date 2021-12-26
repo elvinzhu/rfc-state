@@ -1,11 +1,3 @@
-function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, data: res });
-    }, 300);
-  });
-}
-
 export interface IPost {
   id: number;
   title: string;
@@ -15,6 +7,14 @@ export interface IState {
   id: number;
   postDetail?: IPost;
   detailError?: string;
+}
+
+function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: res });
+    }, 300);
+  });
 }
 
 export function getDetail({ id }, test: string): Promise<Partial<IState>> {
