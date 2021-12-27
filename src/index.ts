@@ -5,6 +5,13 @@ import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
 type TAnyObject = Record<string, any>;
 type TActionBase = Record<string, (...args: any[]) => TAnyObject | Promise<TAnyObject> | void>;
 
+/**
+ * similar to React.useState but much more powerful;
+ * @param initialState initial state.
+ * @param rawActions action callbacks.
+ * @param props component's props.
+ * @returns
+ */
 export default function rfcState<TState extends TAnyObject, TAction extends TActionBase, TProps extends TAnyObject>(initialState: TState, rawActions?: TAction, props?: TProps) {
   const [data, setData] = useState<TState>(initialState);
   const stateRef = useRef<{ state: TState; props: TProps }>({ state: data, props });
@@ -21,7 +28,6 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
     };
     return {
       getState,
-      getProps,
       setState,
       actions: transformActions(rawActions, setState, getState, getProps) as TAction,
     };
@@ -32,7 +38,7 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
 
 export * from './effects';
 
-function transformActions(rawActions: TActionBase, setState: (newSate: TAnyObject) => void, getState: () => TAnyObject, getProps: () => TAnyObject) {
+function transformActions(rawActions: TActionBase, setState: Function, getState: Function, getProps: Function) {
   const actions = {} as TActionBase;
   if (rawActions && isPlainObject(rawActions)) {
     for (let key in rawActions) {
@@ -41,13 +47,12 @@ function transformActions(rawActions: TActionBase, setState: (newSate: TAnyObjec
         actions[key] = function () {
           const res = fn.apply(null, arguments);
           if (isGeneratorFn(fn)) {
-            execGenerator(res as any, setState, getState, getProps);
+            execGenerator(res, setState, getState, getProps);
           } else if (isPromise(res)) {
-            (res as Promise<any>).then(setState);
+            res.then(setState);
           } else {
-            setState(res as TAnyObject);
+            setState(res);
           }
-          return res;
         };
       }
     }
