@@ -1,16 +1,5 @@
-import { takeState } from '../../index';
-
-export interface IPost {
-  id: number;
-  title: string;
-}
-
-export interface IState {
-  id: number;
-  detailLoading?: boolean;
-  postDetail?: IPost;
-  detailError?: string;
-}
+import { takeProps, takeState } from '../../src';
+import { IProps, IState, IPost } from './types';
 
 function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
   return new Promise((resolve) => {
@@ -20,8 +9,12 @@ function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
   });
 }
 
-export async function* getDetail(test: string): AsyncGenerator<Partial<IState>> {
-  const {} = yield takeState<IState>();
+export async function* getDetail(id: number): AsyncGenerator<Partial<IState>, any, any> {
+  const state: IState = yield takeState();
+  const props: IProps = yield takeProps();
+
+  console.log(state, props);
+
   yield { detailLoading: true };
   const res = await mockRequest<IPost>({
     id: 1,
