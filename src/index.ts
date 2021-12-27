@@ -29,6 +29,7 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
     return {
       getState,
       setState,
+      // TODO: make all actions return void?
       actions: transformActions(rawActions, setState, getState, getProps) as TAction,
     };
   }, []);
