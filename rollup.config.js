@@ -1,6 +1,6 @@
 export default [
   {
-    input: 'dist/index.js',
+    input: '.temp/index.js',
     output: [
       {
         file: 'dist/index.js',

@@ -1,5 +1,6 @@
 node_modules
+.temp
 dist
-index.d.ts
+types
 coverage
 package-lock.json

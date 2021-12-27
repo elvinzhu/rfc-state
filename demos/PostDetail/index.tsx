@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import useState from '../../index';
+import useState from '../../src';
 import { IState, getDetail, updatePost } from './helper';
 
 const intialValues: IState = {

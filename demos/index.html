@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>generator test</title>
+</head>
+
+<body>
+
+    <script>
+        function isPromise(obj) {
+            return obj instanceof Promise || (Boolean(obj) && typeof obj.then === 'function');
+        }
+        const TYPE_KEY = Symbol('TYPE');
+        const TYPE_TAKE_STATE = 'TAKE_STATE';
+        function execGenerator(iterator, setState, getState) {
+            let counter = 0;
+            let beginTime = Date.now();
+            (function execNext(result) {
+                counter++;
+                if (Date.now() > beginTime + 1000) {
+                    if (counter > 100) {
+                        // executed 100 times in just one second!
+                        // there must be something wrong!
+                        throw new Error('It looks like there is a infinite loop in your generator function?');
+                    } else {
+                        beginTime = Date.now();
+                        counter = 0;
+                    }
+                }
+                const gRes = iterator.next(result);
+                const setAndNext = (iRes, state = iRes.value) => {
+                    let nextParam = state;
+                    if (state) {
+                        if (state[TYPE_KEY] === TYPE_TAKE_STATE) {
+                            nextParam = getState();
+                        } else {
+                            setState(state);
+                        }
+                    }
+                    if (!iRes.done) {
+                        execNext(nextParam);
+                    }
+                };
+                if (isPromise(gRes)) {
+                    // async generator
+                    gRes.then(setAndNext);
+                } else if (isPromise(gRes.value)) {
+                    // sync generator that yield a Promise
+                    gRes.value.then((res) => {
+                        setAndNext(gRes, res);
+                    });
+                } else {
+                    // sync generator that yield a none-Promise value
+                    setAndNext(gRes);
+                }
+            })();
+        }
+
+        function mockPromise(value, time) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(value)
+                }, time)
+            })
+        }
+
+        function* gTest() {
+            yield 1;
+            const a = yield mockPromise('gTest1', 200);
+            console.log('afedter ', a);
+        }
+
+        async function* gTest2() {
+            const state = yield { [TYPE_KEY]: TYPE_TAKE_STATE };
+            console.log('state =>', state);
+            const a = yield mockPromise('gTest2 - 1', 200);
+            console.log('gTest2 - 1', a);
+            const b = await mockPromise('gTest2 - 2', 200);
+            yield 1000;
+        }
+
+        function* gTest3() {
+            return 1
+        }
+
+        const ite = gTest2();
+        execGenerator(ite, (e) => console.log('setState => ', e), () => {
+            return {
+                id: 1,
+                title: 'rfc-state is great!'
+            }
+        })
+    </script>
+</body>
+
+</html>

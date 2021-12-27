@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
+    "outDir": ".temp",
     "target": "es5",
     "module": "es6",
     "importHelpers": true,
@@ -9,7 +9,7 @@
     "moduleResolution": "node",
     "jsx": "react",
     "declaration": true,
-    "declarationDir": "./"
+    "declarationDir": "./types"
   },
-  "files": ["index.ts"]
+  "files": ["src/index.ts"]
 }
