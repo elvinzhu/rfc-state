@@ -25,6 +25,7 @@
   "files": [
     "dist",
     "types",
+    "effects",
     "index.d.ts",
     "effects.d.ts"
   ],
