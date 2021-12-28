@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { isGeneratorFn, isPlainObject, isPromise } from './helper';
+import { isGenerator, isPlainObject, isPromise } from './helper';
 import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
 
 type TAnyObject = Record<string, any>;
@@ -49,7 +49,7 @@ function transformActions(rawActions: TActionBase, setState: Function, getState:
         const fn = rawActions[key];
         actions[key] = function () {
           const res = fn.apply(null, arguments);
-          if (isGeneratorFn(fn)) {
+          if (isGenerator(res)) {
             execGenerator(res, setState, getState, getProps);
           } else if (isPromise(res)) {
             res.then(setState);

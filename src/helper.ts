@@ -10,12 +10,5 @@ export function isPromise(obj: any) {
 }
 
 export function isGenerator(obj: any) {
-  return 'function' == typeof obj.next && 'function' == typeof obj.throw;
-}
-
-export function isGeneratorFn(obj: any) {
-  var constructor = obj.constructor;
-  if (!constructor) return false;
-  if ('GeneratorFunction' === constructor.name || 'GeneratorFunction' === constructor.displayName) return true;
-  return isGenerator(constructor.prototype);
+  return Boolean(obj) && 'function' == typeof obj.next && 'function' == typeof obj.throw;
 }
