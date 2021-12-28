@@ -18,6 +18,10 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
   stateRef.current.state = data;
   stateRef.current.props = props;
 
+  // type MemorizedAction = {
+  //   [Key in keyof TAction]: (...args: Parameters<TAction[Key]>) => void;
+  // };
+
   const returns = useMemo(() => {
     const getState = () => stateRef.current.state;
     const getProps = () => stateRef.current.props;
@@ -37,8 +41,6 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
   return { state: data, ...returns };
 }
 
-export * from './effects';
-
 function transformActions(rawActions: TActionBase, setState: Function, getState: Function, getProps: Function) {
   const actions = {} as TActionBase;
   if (rawActions && isPlainObject(rawActions)) {
@@ -54,6 +56,7 @@ function transformActions(rawActions: TActionBase, setState: Function, getState:
           } else {
             setState(res);
           }
+          return res;
         };
       }
     }
