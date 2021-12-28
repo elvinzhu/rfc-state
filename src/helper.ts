@@ -6,9 +6,9 @@ export function isPlainObject(target: any) {
 }
 
 export function isPromise(obj: any) {
-  return obj instanceof Promise || (Boolean(obj) && typeof obj.then === 'function');
+  return Boolean(obj) && typeof obj.then === 'function' && typeof obj.catch === 'function';
 }
 
 export function isGenerator(obj: any) {
-  return Boolean(obj) && 'function' == typeof obj.next && 'function' == typeof obj.throw;
+  return Boolean(obj) && typeof obj.next === 'function' && typeof obj.throw === 'function';
 }
