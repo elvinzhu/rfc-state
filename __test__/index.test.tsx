@@ -1,8 +1,18 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { jest, describe, expect, test, it } from '@jest/globals';
 import React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
-import PostDetail from '../demos/PostDetail';
+import PostDetail from '../demo/PostDetail';
 import { act } from 'react-dom/test-utils';
+
+const sleep = (time: number) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
+};
 
 let container = null;
 beforeEach(() => {
@@ -18,15 +28,29 @@ afterEach(() => {
   container = null;
 });
 
-it('changes value when clicked', () => {
-  const onChange = jest.fn();
+test('if async generator works fine', async () => {
   act(() => {
     render(<PostDetail id={1} />, container);
   });
 
-  // get a hold of the button element, and trigger some clicks on it
-  // const button = document.querySelector('[data-testid=toggle]');
-  // expect(button.innerHTML).toBe('Turn on');
+  let button = document.querySelector('#JS_title');
+  let loading = document.querySelector('#JS_loading');
+  expect(loading).toBeNull();
+  expect(button.textContent).toBe('');
+
+  await sleep(100);
+
+  button = document.querySelector('#JS_title');
+  loading = document.querySelector('#JS_loading');
+  expect(loading.textContent).toBe('loading...');
+  expect(button).toBeNull();
+
+  await sleep(301);
+
+  button = document.querySelector('#JS_title');
+  loading = document.querySelector('#JS_loading');
+  expect(button.textContent).toBe('test-title');
+  expect(loading).toBeNull();
 
   // act(() => {
   //   button.dispatchEvent(new MouseEvent('click', { bubbles: true }));

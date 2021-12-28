@@ -1,4 +1,5 @@
-import { takeProps, takeState } from '../../src';
+// import { takeProps, takeState } from 'rfc-state/effects';
+import { takeProps, takeState } from '../../src/effects';
 import { IProps, IState, IPost } from './types';
 
 function mockRequest<T>(res: T): Promise<{ success: boolean; data: T }> {
@@ -15,20 +16,20 @@ export async function* getDetail(id: number): AsyncGenerator<Partial<IState>, an
 
   console.log(state, props);
 
-  yield { detailLoading: true };
+  yield { loading: true };
   const res = await mockRequest<IPost>({
-    id: 1,
-    title: 'rfc-state is awesome!',
+    id: props.id,
+    title: 'test-title-' + props.id,
   });
   if (res.success) {
     yield {
       postDetail: res.data,
-      detailLoading: false,
+      loading: false,
     };
   } else {
     yield {
-      detailError: 'error to fetch data!',
-      detailLoading: false,
+      detailError: 'error',
+      loading: false,
     };
   }
 }

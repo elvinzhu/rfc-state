@@ -5,7 +5,7 @@ export interface IPost {
 
 export interface IState {
   id: number;
-  detailLoading?: boolean;
+  loading?: boolean;
   postDetail?: IPost;
   detailError?: string;
 }
