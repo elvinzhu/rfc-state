@@ -3,7 +3,7 @@
 import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
 
 export type TAnyObject = Record<string, any>;
-export type TActionBase = Record<string, (...args: any[]) => TAnyObject | Promise<TAnyObject> | void>;
+export type TActionBase = Record<string, (...args: any[]) => any>;
 
 /**
  * transform user's actions to rfc-state's controled actions;
