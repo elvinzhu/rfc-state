@@ -15,3 +15,14 @@ export function takeState() {
 export function takeProps() {
   return { [TYPE_KEY]: TYPE_TAKE_PROPS } as Record<string, any>;
 }
+
+/**
+ * sleep 'time' millisecond
+ * @param time
+ * @returns
+ */
+export function sleep(time: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
+}
