@@ -3,7 +3,7 @@ import { TActionBase, transformActions, execGenerator, isFunction } from '../src
 import { takeProps, takeState, sleep } from '../src/effects';
 
 const SimpleObj = { loading: true };
-const useActions = {
+const userActions = {
   num: 1,
   obj: {},
   A() {
@@ -47,7 +47,7 @@ const getProps = jest.fn();
 
 const actions = transformActions(
   // @ts-ignore
-  useActions,
+  userActions,
   setState,
   getState,
   getProps

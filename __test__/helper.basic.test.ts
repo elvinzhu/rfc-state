@@ -6,11 +6,6 @@ test('if isFunction works properly', () => {
   expect(isFunction(() => {})).toBe(true);
 });
 
-test('if isFunction works properly', () => {
-  expect(isFunction({})).toBe(false);
-  expect(isFunction(() => {})).toBe(true);
-});
-
 test('if isPlainObject works properly', () => {
   expect(isPlainObject({})).toBe(true);
   expect(isPlainObject(12)).toBe(false);
