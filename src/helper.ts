@@ -38,12 +38,12 @@ export function execGenerator(iterator: { next: Function }, setState: Function, 
   let counter = 0;
   let beginTime = Date.now();
   (function execNext(result?: any) {
-    counter++;
-    if (Date.now() > beginTime + 1000) {
-      if (counter > 100) {
+    counter += 1;
+    if (counter > 100) {
+      if (Date.now() < beginTime + 1000) {
         // executed 100 times in just one second!
         // there must be something wrong!
-        throw new Error('It looks like there is a infinite loop in your generator function!');
+        throw new Error("It looks like there's a infinite loop that executed too quickly in your generator function!");
       } else {
         beginTime = Date.now();
         counter = 0;
