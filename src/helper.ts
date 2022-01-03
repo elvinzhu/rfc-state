@@ -1,5 +1,84 @@
 // export type ExtractRestParameter<T extends (...args: any) => any> = T extends (arg: any, ...rest: infer P) => any ? P : never;
 // export type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : never }[keyof T];
+import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
+
+export type TAnyObject = Record<string, any>;
+export type TActionBase = Record<string, (...args: any[]) => TAnyObject | Promise<TAnyObject> | void>;
+
+/**
+ * transform user's actions to rfc-state's controled actions;
+ */
+export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getState: Function, getProps: Function) {
+  const actions = {} as T;
+  if (rawActions && isPlainObject(rawActions)) {
+    for (let key in rawActions) {
+      if (typeof rawActions[key] === 'function') {
+        const fn = rawActions[key];
+        actions[key] = function () {
+          const res = fn.apply(null, arguments);
+          if (isGenerator(res)) {
+            execGenerator(res, setState, getState, getProps);
+          } else if (isPromise(res)) {
+            res.then(setState);
+          } else {
+            setState(res);
+          }
+          return res;
+        } as T[Extract<keyof T, string>];
+      }
+    }
+  }
+  return actions;
+}
+
+/**
+ * execute the generator function
+ */
+export function execGenerator(iterator: { next: Function }, setState: Function, getState: Function, getProps: Function) {
+  let counter = 0;
+  let beginTime = Date.now();
+  (function execNext(result?: any) {
+    counter++;
+    if (Date.now() > beginTime + 1000) {
+      if (counter > 100) {
+        // executed 100 times in just one second!
+        // there must be something wrong!
+        throw new Error('It looks like there is a infinite loop in your generator function!');
+      } else {
+        beginTime = Date.now();
+        counter = 0;
+      }
+    }
+    const gRes = iterator.next(result);
+    const setAndNext = (iRes: { done: boolean; value: any }, state = iRes.value) => {
+      let param = state;
+      if (state) {
+        if (state[TYPE_KEY] === TYPE_TAKE_STATE) {
+          param = getState();
+        } else if (state[TYPE_KEY] === TYPE_TAKE_PROPS) {
+          param = getProps();
+        } else {
+          setState(state);
+        }
+      }
+      if (!iRes.done) {
+        execNext(param);
+      }
+    };
+    if (isPromise(gRes)) {
+      // async generator
+      gRes.then(setAndNext);
+    } else if (isPromise(gRes.value)) {
+      // sync generator that yield a Promise
+      gRes.value.then((res: TAnyObject) => {
+        setAndNext(gRes, res);
+      });
+    } else {
+      // sync generator that yield a none-Promise value
+      setAndNext(gRes);
+    }
+  })();
+}
 
 export function isPlainObject(target: any) {
   return Object.prototype.toString.call(target) === '[object Object]';
