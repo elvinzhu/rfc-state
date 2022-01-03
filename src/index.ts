@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
-import { isGenerator, isPlainObject, isPromise } from './helper';
+import { isGenerator, isPlainObject, isPromise, isFunction } from './helper';
 import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
 
 type TAnyObject = Record<string, any>;
@@ -12,7 +12,7 @@ type TActionBase = Record<string, (...args: any[]) => TAnyObject | Promise<TAnyO
  * @param props component's props.
  * @returns
  */
-export default function rfcState<TState extends TAnyObject, TAction extends TActionBase, TProps extends TAnyObject>(initialState: TState, rawActions?: TAction, props?: TProps) {
+export default function rfcState<TState extends TAnyObject, TAction extends TActionBase, TProps extends TAnyObject>(initialState: TState | (() => TState), rawActions?: TAction, props?: TProps) {
   const [data, setData] = useState<TState>(initialState);
   const stateRef = useRef<{ state: TState; props: TProps }>({ state: data, props });
   stateRef.current.state = data;
@@ -25,8 +25,10 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
   const returns = useMemo(() => {
     const getState = () => stateRef.current.state;
     const getProps = () => stateRef.current.props;
-    const setState = (newState: TState) => {
-      if (newState && isPlainObject(newState)) {
+    const setState = (newState: TState | ((oldState: TState) => TState)) => {
+      if (isFunction(newState)) {
+        setData(newState);
+      } else if (newState && isPlainObject(newState)) {
         setData({ ...stateRef.current, ...newState });
       }
     };
@@ -41,7 +43,7 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
   return { state: data, ...returns };
 }
 
-function transformActions(rawActions: TActionBase, setState: Function, getState: Function, getProps: Function) {
+function transformActions(rawActions: TActionBase, setState: (obj: any) => void, getState: Function, getProps: Function) {
   const actions = {} as TActionBase;
   if (rawActions && isPlainObject(rawActions)) {
     for (let key in rawActions) {

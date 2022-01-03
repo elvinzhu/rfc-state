@@ -5,10 +5,14 @@ export function isPlainObject(target: any) {
   return Object.prototype.toString.call(target) === '[object Object]';
 }
 
-export function isPromise(obj: any) {
-  return Boolean(obj) && typeof obj.then === 'function' && typeof obj.catch === 'function';
+export function isPromise(target: any): target is Promise<any> {
+  return Boolean(target) && typeof target.then === 'function' && typeof target.catch === 'function';
 }
 
-export function isGenerator(obj: any) {
-  return Boolean(obj) && typeof obj.next === 'function' && typeof obj.throw === 'function';
+export function isFunction(target: any): target is Function {
+  return typeof target === 'function';
+}
+
+export function isGenerator(target: any): target is Generator | AsyncGenerator {
+  return Boolean(target) && typeof target.next === 'function' && typeof target.throw === 'function';
 }
