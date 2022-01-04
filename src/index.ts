@@ -25,7 +25,7 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
       if (isFunction(newState)) {
         setData(newState);
       } else if (newState && isPlainObject(newState)) {
-        setData({ ...stateRef.current, ...newState });
+        setData({ ...stateRef.current.state, ...newState });
       }
     };
     return {
@@ -38,3 +38,10 @@ export default function rfcState<TState extends TAnyObject, TAction extends TAct
 
   return { state: data, ...returns };
 }
+
+/**
+ * build the return type of generator;
+ */
+export type GeneratorReturn<T, TReturn = any, TNext = any> =
+  | AsyncGenerator<Partial<T> | Promise<Partial<T> | void>, TReturn, TNext>
+  | Generator<Partial<T> | Promise<Partial<T> | void>, TReturn, TNext>;

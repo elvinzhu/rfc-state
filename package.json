@@ -1,6 +1,6 @@
 {
   "name": "rfc-state",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "a new way to write react function component",
   "main": "dist/cjs/index.js",
   "module": "dist/index.js",

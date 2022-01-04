@@ -10,7 +10,7 @@ export type TActionBase = Record<string, (...args: any[]) => any>;
  */
 export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getState: Function, getProps: Function) {
   const actions = {} as T;
-  if (rawActions && isPlainObject(rawActions)) {
+  if (rawActions && (isPlainObject(rawActions) || isModule(rawActions))) {
     for (let key in rawActions) {
       if (typeof rawActions[key] === 'function') {
         const fn = rawActions[key];
@@ -81,7 +81,13 @@ export function execGenerator(iterator: { next: Function }, setState: Function, 
 }
 
 export function isPlainObject(target: any) {
-  return Object.prototype.toString.call(target) === '[object Object]';
+  const type = Object.prototype.toString.call(target);
+  return type === '[object Object]';
+}
+
+export function isModule(target: any) {
+  const type = Object.prototype.toString.call(target);
+  return type === '[object Module]';
 }
 
 export function isPromise(target: any): target is Promise<any> {
