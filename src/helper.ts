@@ -17,7 +17,7 @@ export function transformActions<T extends TActionBase>(rawActions: T, setState:
         actions[key] = function () {
           const res = fn.apply(null, arguments);
           if (isGenerator(res)) {
-            execGenerator(res, setState, getState, getProps);
+            return execGenerator(res, setState, getState, getProps);
           } else if (isPromise(res)) {
             res.then(setState);
           } else {
@@ -35,49 +35,53 @@ export function transformActions<T extends TActionBase>(rawActions: T, setState:
  * execute the generator function
  */
 export function execGenerator(iterator: { next: Function }, setState: Function, getState: Function, getProps: Function) {
-  let counter = 0;
-  let beginTime = Date.now();
-  (function execNext(result?: any) {
-    counter += 1;
-    if (counter > 100) {
-      if (Date.now() < beginTime + 1000) {
-        // executed 100 times in just one second!
-        // there must be something wrong!
-        throw new Error("It looks like there's a infinite loop that executed too quickly in your generator function!");
-      } else {
-        beginTime = Date.now();
-        counter = 0;
-      }
-    }
-    const gRes = iterator.next(result);
-    const setAndNext = (iRes: { done: boolean; value: any }, state = iRes.value) => {
-      let param = state;
-      if (state) {
-        if (state[TYPE_KEY] === TYPE_TAKE_STATE) {
-          param = getState();
-        } else if (state[TYPE_KEY] === TYPE_TAKE_PROPS) {
-          param = getProps();
+  return new Promise<void>((resolve) => {
+    let counter = 0;
+    let beginTime = Date.now();
+    (function execNext(result?: any) {
+      counter += 1;
+      if (counter > 100) {
+        if (Date.now() < beginTime + 1000) {
+          // executed 100 times in just one second!
+          // there must be something wrong!
+          throw new Error("It looks like there's a infinite loop that being executed too quickly in your generator function!");
         } else {
-          setState(state);
+          beginTime = Date.now();
+          counter = 0;
         }
       }
-      if (!iRes.done) {
-        execNext(param);
+      const gRes = iterator.next(result);
+      const setAndNext = (iRes: { done: boolean; value: any }, state = iRes.value) => {
+        let param = state;
+        if (state) {
+          if (state[TYPE_KEY] === TYPE_TAKE_STATE) {
+            param = getState();
+          } else if (state[TYPE_KEY] === TYPE_TAKE_PROPS) {
+            param = getProps();
+          } else {
+            setState(state);
+          }
+        }
+        if (iRes.done) {
+          resolve();
+        } else {
+          execNext(param);
+        }
+      };
+      if (isPromise(gRes)) {
+        // async generator
+        gRes.then(setAndNext);
+      } else if (isPromise(gRes.value)) {
+        // sync generator that yield a Promise
+        gRes.value.then((res: TAnyObject) => {
+          setAndNext(gRes, res);
+        });
+      } else {
+        // sync generator that yield a none-Promise value
+        setAndNext(gRes);
       }
-    };
-    if (isPromise(gRes)) {
-      // async generator
-      gRes.then(setAndNext);
-    } else if (isPromise(gRes.value)) {
-      // sync generator that yield a Promise
-      gRes.value.then((res: TAnyObject) => {
-        setAndNext(gRes, res);
-      });
-    } else {
-      // sync generator that yield a none-Promise value
-      setAndNext(gRes);
-    }
-  })();
+    })();
+  });
 }
 
 export function isPlainObject(target: any) {
