@@ -1,4 +1,15 @@
-import { TYPE_KEY, TYPE_TAKE_STATE, TYPE_TAKE_PROPS } from './consts';
+import { TYPE_KEY, TYPE_TAKE_STATE, TYPE_TAKE_PROPS, TYPE_PUT_STATE } from './consts';
+
+/**
+ * set state;
+ * @returns
+ */
+export function putState<S extends Record<string, any> = Record<string, any>>(state: S) {
+  return {
+    ...state,
+    [TYPE_KEY]: TYPE_PUT_STATE,
+  } as S;
+}
 
 /**
  * get the state;
@@ -22,7 +33,7 @@ export function takeProps() {
  * @returns
  */
 export function sleep(time: number) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(resolve, time);
   });
 }

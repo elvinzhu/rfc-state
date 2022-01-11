@@ -1,6 +1,6 @@
 // export type ExtractRestParameter<T extends (...args: any) => any> = T extends (arg: any, ...rest: infer P) => any ? P : never;
 // export type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : never }[keyof T];
-import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE } from './consts';
+import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE, TYPE_PUT_STATE } from './consts';
 
 export type TAnyObject = Record<string, any>;
 export type TActionBase = Record<string, (...args: any[]) => any>;
@@ -10,22 +10,26 @@ export type TActionBase = Record<string, (...args: any[]) => any>;
  */
 export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getState: Function, getProps: Function) {
   const actions = {} as T;
-  if (rawActions && (isPlainObject(rawActions) || isModule(rawActions))) {
-    for (let key in rawActions) {
-      if (typeof rawActions[key] === 'function') {
-        const fn = rawActions[key];
-        actions[key] = function () {
-          const res = fn.apply(null, arguments);
-          if (isGenerator(res)) {
-            return execGenerator(res, setState, getState, getProps);
-          } else if (isPromise(res)) {
-            res.then(setState);
-          } else {
-            setState(res);
-          }
-          return res;
-        } as T[Extract<keyof T, string>];
-      }
+  const putState = (e: any) => {
+    if (e && e[TYPE_KEY] === TYPE_PUT_STATE) {
+      delete e[TYPE_KEY];
+      setState(e);
+    }
+  };
+  for (let key in rawActions) {
+    if (typeof rawActions[key] === 'function') {
+      const fn = rawActions[key];
+      actions[key] = function () {
+        const res = fn.apply(null, arguments);
+        if (isGenerator(res)) {
+          return execGenerator(res, putState, getState, getProps);
+        } else if (isPromise(res)) {
+          res.then(putState);
+        } else {
+          putState(res);
+        }
+        return res;
+      } as T[Extract<keyof T, string>];
     }
   }
   return actions;
@@ -35,7 +39,7 @@ export function transformActions<T extends TActionBase>(rawActions: T, setState:
  * execute the generator function
  */
 export function execGenerator(iterator: { next: Function }, setState: Function, getState: Function, getProps: Function) {
-  return new Promise<void>((resolve) => {
+  return new Promise<void>(resolve => {
     let counter = 0;
     let beginTime = Date.now();
     (function execNext(result?: any) {
@@ -44,7 +48,7 @@ export function execGenerator(iterator: { next: Function }, setState: Function, 
         if (Date.now() < beginTime + 1000) {
           // executed 100 times in just one second!
           // there must be something wrong!
-          throw new Error("It looks like there's a infinite loop that being executed too quickly in your generator function!");
+          throw new Error("It looks like there's a infinite loop that running too quickly in your generator function!");
         } else {
           beginTime = Date.now();
           counter = 0;
@@ -89,10 +93,10 @@ export function isPlainObject(target: any) {
   return type === '[object Object]';
 }
 
-export function isModule(target: any) {
-  const type = Object.prototype.toString.call(target);
-  return type === '[object Module]';
-}
+// export function isModule(target: any) {
+//   const type = Object.prototype.toString.call(target);
+//   return type === '[object Module]';
+// }
 
 export function isPromise(target: any): target is Promise<any> {
   return Boolean(target) && typeof target.then === 'function' && typeof target.catch === 'function';
