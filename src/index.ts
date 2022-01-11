@@ -7,6 +7,7 @@ import { TAnyObject, TActionBase, transformActions, isPlainObject, isFunction } 
  * @param rawActions callbacks. The return type of Generator functions will be changed to Promise<void> to indicate if the generator is done.
  * @param props component's props.
  * @returns {*} different form React.useState, \`useRfcState\` returns an object.
+ * @see {@link https://github.com/elvinzhu/rfc-state}
  * @example
  * import useRfcState from 'rfc-state';
  * import * as rawActions from './actions';

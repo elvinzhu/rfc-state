@@ -1,11 +1,11 @@
 {
   "name": "rfc-state",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "a new way to write react function component",
-  "main": "dist/cjs/index.js",
-  "module": "dist/index.js",
+  "main": "dist/index.js",
+  "types": "./types/index.d.ts",
   "scripts": {
-    "build": "tsc --module es6 --outDir dist && tsc --module commonjs --outDir dist/cjs",
+    "build": "tsc",
     "test": "jest --reporter=lcov --coverage",
     "jest": "jest --collect-coverage",
     "coverage": "codecov --disable=gcov,search -t 990bb158-3ffc-40d4-8803-b21075f074f1 -f coverage/coverage-final.json",
@@ -21,7 +21,7 @@
     "state",
     "callback"
   ],
-  "author": "elvin zhu",
+  "author": "elvin zhu <yongyu168@foxmail.com>",
   "files": [
     "dist",
     "types",
@@ -31,7 +31,6 @@
   ],
   "license": "MIT",
   "sideEffects": false,
-  "types": "./index.d.ts",
   "bugs": {
     "url": "https://github.com/elvinzhu/rfc-state/issues"
   },

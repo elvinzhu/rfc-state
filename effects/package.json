@@ -1,5 +1,0 @@
-{
-  "name": "rfc-state/effects",
-  "main": "../dist/cjs/effects.js",
-  "module": "../dist/effects.js"
-}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-// import useState from 'rfc-state';
-import useState from '../../src';
+// import useRfcState from 'rfc-state';
+import useRfcState from '../../src';
 import * as rawActions from './actions';
 import { IProps, IState, IPost } from './types';
 
@@ -9,7 +9,7 @@ const intialValues: IState = {
 };
 
 export default function PostDetail(props: IProps) {
-  const { state, actions } = useState(intialValues, rawActions, props);
+  const { state, actions } = useRfcState(intialValues, rawActions, props);
   const { getDetail, changeTitle } = actions;
 
   useEffect(() => {
