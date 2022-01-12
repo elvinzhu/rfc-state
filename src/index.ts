@@ -26,19 +26,12 @@ export default function useRfcState<TState extends TAnyObject, TAction extends T
   const returns = useMemo(() => {
     const getStateRef = () => stateRef.current;
     const getState = () => stateRef.current.state;
-    const setState = (newState: TState | ((oldState: TState) => TState)) => {
-      if (newState) {
-        if (isFunction(newState)) {
-          newState = newState(getState());
-        }
-        setInnerState({ ...getState(), ...newState });
-      }
+    const setState = (newState: Partial<TState> | ((oldState: TState) => Partial<TState>)) => {
+      if (isFunction(newState)) newState = newState(getState());
+      setInnerState({ ...getState(), ...newState });
     };
-    return {
-      getState,
-      setState,
-      actions: transformActions(rawActions, setState, getStateRef),
-    };
+    const actions = transformActions(rawActions, setState, getStateRef);
+    return { getState, setState, actions };
   }, []);
 
   useEffect(() => {
