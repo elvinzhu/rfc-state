@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from 'react';
-import { TAnyObject, TActionBase, transformActions, isPlainObject, isFunction } from './helper';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { TAnyObject, TActionBase, transformActions, isFunction } from './helper';
 
 /**
  * Similar to React.useState but much more powerful;
@@ -18,34 +18,34 @@ import { TAnyObject, TActionBase, transformActions, isPlainObject, isFunction } 
  * }
  */
 export default function useRfcState<TState extends TAnyObject, TAction extends TActionBase, TProps extends TAnyObject>(initialState: TState | (() => TState), rawActions?: TAction, props?: TProps) {
-  const [data, setData] = useState<TState>(initialState);
-  const stateRef = useRef<{ state: TState; props: TProps }>({ state: data, props });
-  stateRef.current.state = data;
+  const [state, setInnerState] = useState<TState>(initialState);
+  const stateRef = useRef<{ state: TState; props: TProps; isAlive: boolean }>({ state, props, isAlive: true });
+  stateRef.current.state = state;
   stateRef.current.props = props;
 
-  type MemorizedAction = {
-    [Key in keyof TAction]: (...args: Parameters<TAction[Key]>) => ReturnType<TAction[Key]> extends Generator | AsyncGenerator ? Promise<void> : ReturnType<TAction[Key]>;
-  };
-
   const returns = useMemo(() => {
+    const getStateRef = () => stateRef.current;
     const getState = () => stateRef.current.state;
-    const getProps = () => stateRef.current.props;
     const setState = (newState: TState | ((oldState: TState) => TState)) => {
       if (newState) {
         if (isFunction(newState)) {
           newState = newState(getState());
         }
-        if (isPlainObject(newState)) {
-          setData({ ...stateRef.current.state, ...newState });
-        }
+        setInnerState({ ...getState(), ...newState });
       }
     };
     return {
       getState,
       setState,
-      actions: transformActions<MemorizedAction>(rawActions, setState, getState, getProps),
+      actions: transformActions(rawActions, setState, getStateRef),
     };
   }, []);
 
-  return { state: data, ...returns };
+  useEffect(() => {
+    return () => {
+      stateRef.current.isAlive = false;
+    };
+  }, []);
+
+  return { state, ...returns };
 }

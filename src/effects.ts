@@ -1,4 +1,4 @@
-import { TYPE_KEY, TYPE_TAKE_STATE, TYPE_TAKE_PROPS, TYPE_PUT_STATE } from './consts';
+import { TYPE_KEY, TYPE_TAKE_STATE, TYPE_TAKE_PROPS, TYPE_PUT_STATE, TYPE_IS_ALIVE } from './consts';
 
 /**
  * set state;
@@ -12,19 +12,27 @@ export function putState<S extends Record<string, any> = Record<string, any>>(st
 }
 
 /**
- * get the state;
- * @returns the component's rfc-state
+ * get the original state;
+ * @returns the component's original rfc-state
  */
 export function takeState() {
   return { [TYPE_KEY]: TYPE_TAKE_STATE } as Record<string, any>;
 }
 
 /**
- * get the props;
- * @returns the component's props
+ * get the original props;
+ * @returns the component's original props
  */
 export function takeProps() {
   return { [TYPE_KEY]: TYPE_TAKE_PROPS } as Record<string, any>;
+}
+
+/**
+ * check if the component is alive or not.
+ * @returns Boolean
+ */
+export function isAlive() {
+  return { [TYPE_KEY]: TYPE_IS_ALIVE } as any as boolean;
 }
 
 /**

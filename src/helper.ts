@@ -1,15 +1,20 @@
 // export type ExtractRestParameter<T extends (...args: any) => any> = T extends (arg: any, ...rest: infer P) => any ? P : never;
 // export type ExtractKeysOfValueType<T, K> = { [I in keyof T]: T[I] extends K ? I : never }[keyof T];
-import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE, TYPE_PUT_STATE } from './consts';
+import { TYPE_KEY, TYPE_TAKE_PROPS, TYPE_TAKE_STATE, TYPE_PUT_STATE, TYPE_IS_ALIVE } from './consts';
 
 export type TAnyObject = Record<string, any>;
 export type TActionBase = Record<string, (...args: any[]) => any>;
 
+type TGetStateRef = () => { state: TAnyObject; props: TAnyObject; isAlive: boolean };
+
 /**
  * transform user's actions to rfc-state's controled actions;
  */
-export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getState: Function, getProps: Function) {
-  const actions = {} as T;
+export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getStateRef: TGetStateRef) {
+  type MemorizedAction = {
+    [Key in keyof T]: (...args: Parameters<T[Key]>) => ReturnType<T[Key]> extends Generator | AsyncGenerator ? Promise<void> : ReturnType<T[Key]>;
+  };
+  const actions = {} as MemorizedAction;
   const putState = (e: any) => {
     if (e && e[TYPE_KEY] === TYPE_PUT_STATE) {
       delete e[TYPE_KEY];
@@ -22,7 +27,7 @@ export function transformActions<T extends TActionBase>(rawActions: T, setState:
       actions[key] = function () {
         const res = fn.apply(null, arguments);
         if (isGenerator(res)) {
-          return execGenerator(res, putState, getState, getProps);
+          return execGenerator(res, putState, getStateRef);
         } else if (isPromise(res)) {
           res.then(putState);
         } else {
@@ -38,7 +43,7 @@ export function transformActions<T extends TActionBase>(rawActions: T, setState:
 /**
  * execute the generator function
  */
-export function execGenerator(iterator: { next: Function }, setState: Function, getState: Function, getProps: Function) {
+export function execGenerator(iterator: { next: Function }, setState: Function, getStateRef: TGetStateRef) {
   return new Promise<void>(resolve => {
     let counter = 0;
     let beginTime = Date.now();
@@ -59,9 +64,11 @@ export function execGenerator(iterator: { next: Function }, setState: Function, 
         let param = state;
         if (state) {
           if (state[TYPE_KEY] === TYPE_TAKE_STATE) {
-            param = getState();
+            param = getStateRef().state;
           } else if (state[TYPE_KEY] === TYPE_TAKE_PROPS) {
-            param = getProps();
+            param = getStateRef().props;
+          } else if (state[TYPE_KEY] === TYPE_IS_ALIVE) {
+            param = getStateRef().isAlive;
           } else {
             setState(state);
           }
@@ -88,10 +95,10 @@ export function execGenerator(iterator: { next: Function }, setState: Function, 
   });
 }
 
-export function isPlainObject(target: any) {
-  const type = Object.prototype.toString.call(target);
-  return type === '[object Object]';
-}
+// export function isPlainObject(target: any) {
+//   const type = Object.prototype.toString.call(target);
+//   return type === '[object Object]';
+// }
 
 // export function isModule(target: any) {
 //   const type = Object.prototype.toString.call(target);
