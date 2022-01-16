@@ -8,7 +8,7 @@ export type TActionBase = Record<string, (...args: any[]) => any>;
 type TGetStateRef = () => { state: TAnyObject; props: TAnyObject; isAlive: boolean };
 
 /**
- * transform user's actions to rfc-state's controled actions;
+ * transform user's actions to rfc-state's controlled actions;
  */
 export function transformActions<T extends TActionBase>(rawActions: T, setState: (obj: any) => void, getStateRef: TGetStateRef) {
   type MemorizedAction = {
