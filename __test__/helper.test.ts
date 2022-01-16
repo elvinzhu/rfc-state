@@ -1,41 +1,70 @@
 import { jest, describe, expect, test, it } from '@jest/globals';
 import { TActionBase, transformActions, execGenerator, isFunction } from '../src/helper';
-import { takeProps, takeState, sleep } from '../src/effects';
+import { takeProps, takeState, putState, isAlive, sleep } from '../src/effects';
 
 const SimpleObj = { loading: true };
 const userActions = {
   num: 1,
   obj: {},
-  A() {
-    return 1;
-  },
   B() {
-    return {
-      loading: true,
-    };
+    return { loading: true };
+  },
+  B2() {
+    return putState({ loading: true });
   },
   C() {
     return Promise.resolve(SimpleObj);
   },
-  D() {
-    return Promise.resolve();
+  C2() {
+    return Promise.resolve(putState(SimpleObj));
   },
   *E() {
     yield 1;
     yield SimpleObj;
     yield takeProps();
     yield takeState();
+    yield isAlive();
     yield Promise.resolve(SimpleObj);
+  },
+  *E2() {
+    yield 1;
+    yield putState(SimpleObj);
+    yield takeProps();
+    yield takeState();
+    yield isAlive();
+    yield Promise.resolve(putState(SimpleObj));
   },
   async *F() {
     yield 1;
     yield SimpleObj;
     yield takeProps();
     yield takeState();
+    yield isAlive();
     yield Promise.resolve(SimpleObj);
+  },
+  async *F2() {
+    yield 1;
+    yield putState(SimpleObj);
+    yield takeProps();
+    yield takeState();
+    yield isAlive();
+    yield Promise.resolve(putState(SimpleObj));
   },
   *G() {
     while (true) {
+      yield 1;
+    }
+  },
+  *quickLoop() {
+    while (true) {
+      yield 1;
+    }
+  },
+  *slowLoop() {
+    let counter = 0;
+    while (counter < 110) {
+      yield sleep(20);
+      counter += 1;
       yield 1;
     }
   },
@@ -44,19 +73,34 @@ const userActions = {
 const getState = jest.fn();
 const setState = jest.fn();
 const getProps = jest.fn();
+const isAliveMock = jest.fn();
+
+const getStateRef = () => {
+  return {
+    get state() {
+      return getState();
+    },
+    get props() {
+      return getProps();
+    },
+    get isAlive() {
+      return isAliveMock();
+    },
+  };
+};
 
 const actions = transformActions(
   // @ts-ignore
   userActions,
   setState,
-  getState,
-  getProps
+  getStateRef
 );
 
 beforeEach(() => {
   getState.mock.calls = [];
   setState.mock.calls = [];
   getProps.mock.calls = [];
+  isAliveMock.mock.calls = [];
 });
 
 test('transformActions works properly', () => {
@@ -66,61 +110,77 @@ test('transformActions works properly', () => {
 });
 
 test('action that not return promise or generator', async () => {
-  const { A, B } = actions;
-  // function that return a none-object
-  A();
-  expect(getState).not.toBeCalled();
-  expect(setState).toHaveBeenLastCalledWith(1);
-  expect(getProps).not.toBeCalled();
-
-  // function that return an object
+  const { B, B2 } = actions;
+  // function that return an object without pusState
   B();
-  expect(getState).not.toBeCalled();
+  expect(setState).not.toBeCalled();
+  // function that return an object with pusState
+  B2();
   expect(setState).toHaveBeenLastCalledWith(SimpleObj);
-  expect(getProps).not.toBeCalled();
 });
 
 test('action that return resolved promise', async () => {
-  const { C } = actions;
+  const { C, C2 } = actions;
   C();
   await sleep(1);
-  expect(getState).not.toBeCalled();
-  expect(setState).toHaveBeenLastCalledWith(SimpleObj);
-  expect(getProps).not.toBeCalled();
-});
+  expect(setState).not.toBeCalled();
 
-test('action that return resolved promise2', async () => {
-  const { D } = actions;
-  D();
+  C2();
   await sleep(1);
-  expect(getState).not.toBeCalled();
-  expect(setState).toHaveBeenLastCalledWith(undefined);
-  expect(getProps).not.toBeCalled();
+  expect(setState).toHaveBeenLastCalledWith(SimpleObj);
 });
 
-test('action that return a generator', async () => {
+test('action that return a generator without using effects', async () => {
   const { E } = actions;
   E();
   await sleep(100);
   expect(getState).toBeCalled();
-  expect(setState).toHaveBeenNthCalledWith(1, 1);
-  expect(setState).toHaveBeenNthCalledWith(2, SimpleObj);
-  expect(setState).toHaveBeenNthCalledWith(3, SimpleObj);
+  expect(setState).not.toBeCalled();
   expect(getProps).toBeCalled();
+  expect(isAliveMock).toBeCalled();
+});
+
+test('action that return a generator', async () => {
+  const { E2 } = actions;
+  E2();
+  await sleep(100);
+  expect(getState).toBeCalled();
+  expect(getProps).toBeCalled();
+  expect(isAliveMock).toBeCalled();
+  expect(setState).toHaveBeenNthCalledWith(1, SimpleObj);
+  expect(setState).toHaveBeenNthCalledWith(2, SimpleObj);
+});
+
+test('action that return a async generator without using effects', async () => {
+  const { F } = actions;
+  F();
+  await sleep(1);
+  expect(getState).toBeCalled();
+  expect(getProps).toBeCalled();
+  expect(setState).not.toBeCalled();
 });
 
 test('action that return a async generator', async () => {
-  const { F } = actions;
-  F();
-  await sleep(100);
+  const { F2 } = actions;
+
+  F2();
+  await sleep(1);
   expect(getState).toBeCalled();
-  expect(setState).toHaveBeenNthCalledWith(1, 1);
-  expect(setState).toHaveBeenNthCalledWith(2, SimpleObj);
-  expect(setState).toHaveBeenNthCalledWith(3, SimpleObj);
   expect(getProps).toBeCalled();
+  expect(setState).toHaveBeenNthCalledWith(1, SimpleObj);
+  expect(setState).toHaveBeenNthCalledWith(2, SimpleObj);
 });
 
-// test('throw error', async () => {
-//   const { G } = actions;
-//   G();
-// });
+test('throw error', async () => {
+  const { quickLoop, slowLoop } = actions;
+  try {
+    await quickLoop();
+  } catch (err) {
+    expect(/infinite loop/.test(err.message)).toBe(true);
+  }
+
+  try {
+    await slowLoop();
+    expect(1).toBe(1);
+  } catch (err) {}
+});

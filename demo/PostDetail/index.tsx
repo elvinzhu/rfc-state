@@ -5,16 +5,13 @@ import * as rawActions from './actions';
 import { IProps, IState, IPost } from './types';
 
 const intialValues: IState = {
+  loading: false,
   id: null,
 };
 
 export default function PostDetail(props: IProps) {
   const { state, actions } = useRfcState(intialValues, rawActions, props);
   const { getDetail, changeTitle } = actions;
-
-  useEffect(() => {
-    getDetail(props.id);
-  }, [props.id]);
 
   if (state.loading) {
     return <div id="JS_loading">loading...</div>;
@@ -25,7 +22,12 @@ export default function PostDetail(props: IProps) {
       <p>
         title: <span id="JS_title">{state.postDetail?.title}</span>
       </p>
-      <button onClick={changeTitle}>更新</button>
+      <button id="JS_btn1" onClick={getDetail}>
+        加载
+      </button>
+      <button id="JS_btn2" onClick={changeTitle}>
+        更新
+      </button>
     </div>
   );
 }

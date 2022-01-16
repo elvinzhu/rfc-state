@@ -6,12 +6,12 @@ test('if isFunction works properly', () => {
   expect(isFunction(() => {})).toBe(true);
 });
 
-test('if isPlainObject works properly', () => {
-  expect(isPlainObject({})).toBe(true);
-  expect(isPlainObject(12)).toBe(false);
-  expect(isPlainObject(new Map())).toBe(false);
-  expect(isPlainObject(false)).toBe(false);
-});
+// test('if isPlainObject works properly', () => {
+//   expect(isPlainObject({})).toBe(true);
+//   expect(isPlainObject(12)).toBe(false);
+//   expect(isPlainObject(new Map())).toBe(false);
+//   expect(isPlainObject(false)).toBe(false);
+// });
 
 test('if isPromise works properly', () => {
   expect(isPromise({})).toBe(false);

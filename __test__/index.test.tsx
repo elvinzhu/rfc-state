@@ -4,12 +4,13 @@
 
 import { jest, describe, expect, test, it } from '@jest/globals';
 import React from 'react';
-import { render, unmountComponentAtNode } from 'react-dom';
+import { unmountComponentAtNode } from 'react-dom';
 import PostDetail from '../demo/PostDetail';
-import { act } from 'react-dom/test-utils';
+import { render, fireEvent, act, waitFor, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 
 const sleep = (time: number) => {
-  return new Promise((resolve) => {
+  return new Promise<number>(resolve => {
     setTimeout(resolve, time);
   });
 };
@@ -28,43 +29,32 @@ afterEach(() => {
   container = null;
 });
 
-test('if async generator works fine', async () => {
-  act(() => {
-    render(<PostDetail id={1} />, container);
-  });
+test('intergration', async () => {
+  render(<PostDetail id={1} />, container);
 
-  let button = document.querySelector('#JS_title');
+  // init ui sate
+  let title = document.querySelector('#JS_title');
   let loading = document.querySelector('#JS_loading');
   expect(loading).toBeNull();
-  expect(button.textContent).toBe('');
+  expect(title.textContent).toBe('');
 
-  await sleep(100);
+  let button = document.querySelector('#JS_btn1');
+  fireEvent.click(button);
 
-  button = document.querySelector('#JS_title');
+  // async thing is runing
+  title = document.querySelector('#JS_title');
   loading = document.querySelector('#JS_loading');
   expect(loading.textContent).toBe('loading...');
-  expect(button).toBeNull();
+  expect(title).toBeNull();
 
-  await sleep(301);
+  // await async thing done
+  await act(async () => {
+    await sleep(10);
+  });
 
-  button = document.querySelector('#JS_title');
+  // ui rendered with data
+  title = document.querySelector('#JS_title');
   loading = document.querySelector('#JS_loading');
-  expect(button.textContent).toBe('test-title');
+  expect(title.textContent).toBe('test-title-1');
   expect(loading).toBeNull();
-
-  // act(() => {
-  //   button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  // });
-
-  // expect(onChange).toHaveBeenCalledTimes(1);
-  // expect(button.innerHTML).toBe('Turn off');
-
-  // act(() => {
-  //   for (let i = 0; i < 5; i++) {
-  //     button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-  //   }
-  // });
-
-  // expect(onChange).toHaveBeenCalledTimes(6);
-  // expect(button.innerHTML).toBe('Turn on');
 });
