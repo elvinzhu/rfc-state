@@ -69,7 +69,7 @@ returns:
 import { takeProps, takeState, putState, isAlive } from 'rfc-state/effects';
 ```
 
-by leveraging those `effects`, your actions will be able to read the current `state` and `props` of your function component.
+by leveraging those `effects`, your actions will be able to read the current `state` and `props` of your function component, and also change the `state`.
 
 - `takeProps` read the current `props`
 - `takeState` read the current `state`
@@ -79,16 +79,20 @@ by leveraging those `effects`, your actions will be able to read the current `st
 ## Define actions
 
 `actions` the key and magic parts of `rfc-state`. let's lean about how to define all kinds of your actions.
+  
+ NOTE:
+  - The async function will be turned into sync function that return a promise.
+  - The return type of Generator functions will be changed to Promise to indicate if the generator is done.
 
-- a simple action
+### a simple action
 
 ```ts
 export function changeTitle() {
   return putState({ title: 'rfc-state is awesome!' });
 }
 ```
-
-- return a promise
+  
+### return a promise
 
 `rfc-state` will wait until the promise to be resolved, and change the state.
 
@@ -102,7 +106,7 @@ export function getData() {
 }
 ```
 
-- async function
+### async function
 
 ```ts
 export async function getData() {
@@ -111,9 +115,9 @@ export async function getData() {
 }
 ```
 
-- reading `props` and `state`
+### reading `props` and `state`
 
-now we need to utilize the Generation Function
+now we need to utilize the Generation Function.
 
 ```ts
 export function* getData() {
@@ -135,7 +139,7 @@ export function* getData() {
 }
 ```
 
-- async generator
+### async generator
 
 ```ts
 export async function* getData() {
